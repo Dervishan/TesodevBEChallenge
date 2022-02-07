@@ -10,5 +10,8 @@ namespace TesodevBEChallenge.Api.Customers.Interfaces
     {
         Task<(bool IsSuccess, IEnumerable<Customer> Customers, string ErrorMessage)> GetCustomersAsync();
         Task<(bool IsSuccess, Customer Customer, string ErrorMessage)> GetCustomerAsync(int id);
+        Task<(bool IsSuccess, Customer Customer, string ErrorMessage)> CreateCustomerAsync(Customer customer);
+        Task<(bool IsSuccess, Customer Customer, string ErrorMessage)> UpdateCustomerAsync(Customer customer);
+        Task<(bool IsSuccess, string ErrorMessage)> DeleteCustomerAsync(int id);
     }
 }

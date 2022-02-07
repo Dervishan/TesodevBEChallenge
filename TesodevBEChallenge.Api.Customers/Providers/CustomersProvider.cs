@@ -55,7 +55,10 @@ namespace TesodevBEChallenge.Api.Customers.Providers
                 dbContext.SaveChanges();
             }
         }
-
+        /// <summary>
+        /// Gets all customers
+        /// </summary>
+        /// <returns>Customer List</returns>
         public async Task<(bool IsSuccess, IEnumerable<Models.Customer> Customers, string ErrorMessage)> GetCustomersAsync()
         {
             try
@@ -74,7 +77,11 @@ namespace TesodevBEChallenge.Api.Customers.Providers
                 return (false, null, ex.Message);
             }
         }
-
+        /// <summary>
+        /// Gets a customer by a given id
+        /// </summary>
+        /// <param name="id">CustomerID</param>
+        /// <returns>Customer</returns>
         public async Task<(bool IsSuccess, Models.Customer Customer, string ErrorMessage)> GetCustomerAsync(int id)
         {
             try
@@ -93,6 +100,120 @@ namespace TesodevBEChallenge.Api.Customers.Providers
             {
                 logger?.LogError(ex.ToString());
                 return (false, null, ex.Message);
+            }
+        }
+        /// <summary>
+        /// Creates a Customer
+        /// </summary>
+        /// <param name="customer">Customer</param>
+        /// <returns>Customer</returns>
+        public async Task<(bool IsSuccess, Models.Customer Customer, string ErrorMessage)> CreateCustomerAsync(Models.Customer customer)
+        {
+            try
+            {
+                var customerCount = await dbContext.Customers.LongCountAsync();
+                if (customer.Name != null && customer.Email != null && customer.Address != null)
+                {
+                    var newCustomer = new Db.Customer()
+                    {
+                        Id = (int)(customerCount + 1),
+                        Name = customer.Name,
+                        Email = customer.Email,
+                        Address = new Db.Address() { Id = customer.Address.Id, AddressLine = customer.Address.AddressLine, City = customer.Address.City, Country = customer.Address.Country, CityCode = customer.Address.CityCode },
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+                    logger?.LogInformation("Customer created");
+                    dbContext.Customers.Add(newCustomer);
+                    dbContext.SaveChanges();
+                    var result = mapper.Map<Db.Customer, Models.Customer>(newCustomer);
+                    return (true, result, null);
+                }
+                return (false, null, "One input is empty");
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex.ToString());
+                return (false, null, ex.Message);
+            }
+        }
+        /// <summary>
+        /// Updates a Customer
+        /// </summary>
+        /// <param name="newCustomer">Updated Customer</param>
+        /// <returns>Customer</returns>
+        public async Task<(bool IsSuccess, Models.Customer Customer, string ErrorMessage)> UpdateCustomerAsync(Models.Customer newCustomer)
+        {
+            try
+            {
+                logger?.LogInformation("Querying customers");
+                var customer = await dbContext.Customers.FindAsync(newCustomer.Id);
+                if (customer != null)
+                {
+                    logger?.LogInformation("Customer found");
+                    customer.Name = newCustomer.Name;
+                    customer.Email = newCustomer.Email;
+                    customer.UpdatedAt = DateTime.UtcNow;
+                    dbContext.SaveChanges();
+                    var result = mapper.Map<Db.Customer, Models.Customer>(customer);
+                    return (true, result, null);
+                }
+                return (false, null, "Customer not found");
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex.ToString());
+                return (false, null, ex.Message);
+            }
+        }
+        /// <summary>
+        /// Deletes a Customer by given id
+        /// </summary>
+        /// <param name="id">Customer ID</param>
+        /// <returns>bool</returns>
+        public async Task<(bool IsSuccess, string ErrorMessage)> DeleteCustomerAsync(int id)
+        {
+            try
+            {
+                logger?.LogInformation("Finding customer");
+                var customer = await dbContext.Customers.FindAsync(id);
+                if (customer != null)
+                {
+                    logger?.LogInformation("Customer found");
+                    var result = dbContext.Customers.Remove(customer);
+                    await dbContext.SaveChangesAsync();
+                    return (true, null);
+                }
+                return (false, "Customer not found");
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex.ToString());
+                return (false, ex.Message);
+            }
+        }
+        /// <summary>
+        /// Validates Customer
+        /// </summary>
+        /// <param name="id">Customer ID</param>
+        /// <returns>bool</returns>
+        private bool ValidateCustomerAsync(int id)
+        {
+            try
+            {
+                logger?.LogInformation("Finding customer");
+                var customer = dbContext.Customers.FirstOrDefaultAsync(c => c.Id == id);
+                if (customer != null)
+                {
+                    logger?.LogInformation("Customer found");
+                    return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex.ToString());
+                return false;
             }
         }
     }
